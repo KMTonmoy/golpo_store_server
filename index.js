@@ -2,7 +2,8 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
-
+const dns = require("dns");
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 const port = process.env.PORT || 8000;
 
 // Middleware
@@ -10,7 +11,7 @@ app.use(
   cors({
     origin: ["http://localhost:3000", "http://localhost:3001"],
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 
@@ -73,7 +74,11 @@ async function run() {
         }
 
         const updatedUser = await usersCollection.findOne({ email });
-        res.send({ success: true, message: "User updated successfully", user: updatedUser });
+        res.send({
+          success: true,
+          message: "User updated successfully",
+          user: updatedUser,
+        });
       } catch (error) {
         console.error(error);
         res.status(500).send({ error: "Failed to update user" });
@@ -89,11 +94,11 @@ async function run() {
         const updateDoc = {
           $set: {
             email: user.email,
-            name: user.name || '',
-            photo: user.photo || '',
-            phone: user.phone || '',
-            address: user.address || '',
-            role: user.role || 'user',
+            name: user.name || "",
+            photo: user.photo || "",
+            phone: user.phone || "",
+            address: user.address || "",
+            role: user.role || "user",
             updatedAt: new Date(),
           },
           $setOnInsert: {
@@ -102,10 +107,20 @@ async function run() {
         };
 
         const options = { upsert: true };
-        const result = await usersCollection.updateOne(query, updateDoc, options);
+        const result = await usersCollection.updateOne(
+          query,
+          updateDoc,
+          options,
+        );
 
-        const updatedUser = await usersCollection.findOne({ email: user.email });
-        res.send({ success: true, message: "User saved successfully", user: updatedUser });
+        const updatedUser = await usersCollection.findOne({
+          email: user.email,
+        });
+        res.send({
+          success: true,
+          message: "User saved successfully",
+          user: updatedUser,
+        });
       } catch (error) {
         console.error("Error saving user:", error);
         res.status(500).send({ error: "Failed to save user" });
@@ -169,7 +184,9 @@ async function run() {
         product.createdAt = new Date();
 
         const result = await productsCollection.insertOne(product);
-        const createdProduct = await productsCollection.findOne({ _id: result.insertedId });
+        const createdProduct = await productsCollection.findOne({
+          _id: result.insertedId,
+        });
 
         res.status(201).send({
           success: true,
@@ -178,7 +195,9 @@ async function run() {
         });
       } catch (error) {
         console.error("Error creating product:", error);
-        res.status(500).send({ success: false, error: "Failed to create product" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to create product" });
       }
     });
 
@@ -213,7 +232,9 @@ async function run() {
         });
       } catch (error) {
         console.error("Error fetching products:", error);
-        res.status(500).send({ success: false, error: "Failed to fetch products" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to fetch products" });
       }
     });
 
@@ -223,19 +244,27 @@ async function run() {
         const { id } = req.params;
 
         if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ success: false, error: "Invalid product ID" });
+          return res
+            .status(400)
+            .send({ success: false, error: "Invalid product ID" });
         }
 
-        const product = await productsCollection.findOne({ _id: new ObjectId(id) });
+        const product = await productsCollection.findOne({
+          _id: new ObjectId(id),
+        });
 
         if (!product) {
-          return res.status(404).send({ success: false, error: "Product not found" });
+          return res
+            .status(404)
+            .send({ success: false, error: "Product not found" });
         }
 
         res.send({ success: true, product });
       } catch (error) {
         console.error("Error fetching product:", error);
-        res.status(500).send({ success: false, error: "Failed to fetch product" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to fetch product" });
       }
     });
 
@@ -246,7 +275,9 @@ async function run() {
         const product = req.body;
 
         if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ success: false, error: "Invalid product ID" });
+          return res
+            .status(400)
+            .send({ success: false, error: "Invalid product ID" });
         }
 
         delete product._id;
@@ -262,10 +293,14 @@ async function run() {
         const result = await productsCollection.updateOne(filter, updateDoc);
 
         if (result.matchedCount === 0) {
-          return res.status(404).send({ success: false, error: "Product not found" });
+          return res
+            .status(404)
+            .send({ success: false, error: "Product not found" });
         }
 
-        const updatedProduct = await productsCollection.findOne({ _id: new ObjectId(id) });
+        const updatedProduct = await productsCollection.findOne({
+          _id: new ObjectId(id),
+        });
 
         res.send({
           success: true,
@@ -274,7 +309,9 @@ async function run() {
         });
       } catch (error) {
         console.error("Error updating product:", error);
-        res.status(500).send({ success: false, error: "Failed to update product" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to update product" });
       }
     });
 
@@ -284,13 +321,19 @@ async function run() {
         const { id } = req.params;
 
         if (!ObjectId.isValid(id)) {
-          return res.status(400).send({ success: false, error: "Invalid product ID" });
+          return res
+            .status(400)
+            .send({ success: false, error: "Invalid product ID" });
         }
 
-        const result = await productsCollection.deleteOne({ _id: new ObjectId(id) });
+        const result = await productsCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
 
         if (result.deletedCount === 0) {
-          return res.status(404).send({ success: false, error: "Product not found" });
+          return res
+            .status(404)
+            .send({ success: false, error: "Product not found" });
         }
 
         res.send({
@@ -299,7 +342,9 @@ async function run() {
         });
       } catch (error) {
         console.error("Error deleting product:", error);
-        res.status(500).send({ success: false, error: "Failed to delete product" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to delete product" });
       }
     });
 
@@ -311,7 +356,9 @@ async function run() {
         res.send({ success: true, products });
       } catch (error) {
         console.error("Error fetching products by category:", error);
-        res.status(500).send({ success: false, error: "Failed to fetch products" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to fetch products" });
       }
     });
 
@@ -330,7 +377,9 @@ async function run() {
         res.send({ success: true, products });
       } catch (error) {
         console.error("Error searching products:", error);
-        res.status(500).send({ success: false, error: "Failed to search products" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to search products" });
       }
     });
 
@@ -341,18 +390,24 @@ async function run() {
         res.send({ success: true, categories });
       } catch (error) {
         console.error("Error fetching categories:", error);
-        res.status(500).send({ success: false, error: "Failed to fetch categories" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to fetch categories" });
       }
     });
 
     // GET FLASH SALE PRODUCTS
     app.get("/api/flash-sale", async (req, res) => {
       try {
-        const products = await productsCollection.find({ isFlashSale: true }).toArray();
+        const products = await productsCollection
+          .find({ isFlashSale: true })
+          .toArray();
         res.send({ success: true, products });
       } catch (error) {
         console.error("Error fetching flash sale:", error);
-        res.status(500).send({ success: false, error: "Failed to fetch flash sale" });
+        res
+          .status(500)
+          .send({ success: false, error: "Failed to fetch flash sale" });
       }
     });
 
@@ -361,7 +416,6 @@ async function run() {
       console.log(`🚀 Server is running on port ${port}`);
       console.log(`📦 Product API: http://localhost:${port}/api/products`);
     });
-
   } catch (error) {
     console.error("❌ Failed to connect to MongoDB:", error.message);
   }
